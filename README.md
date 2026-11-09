@@ -1,0 +1,128 @@
+# storage-account
+
+Creates an Azure storage account, named and tagged through the SevenPico context module, exposing every azurerm_storage_account argument. Storage containers, queues, tables and file shares are not managed here.
+
+## Requirements
+
+| Name | Version |
+|------|---------|
+| terraform | `>= 1.3.0` |
+| azurerm | `>= 4.0.0, < 5.0.0` |
+
+## Module Priority
+
+No SevenPico, SevenPicoForks or CloudPosse module exists for this Azure service, so the module uses `azurerm_storage_account` directly. The root context is declared in `_context.tf`; it and the child contexts use `git::https://github.com/raringgroup/terraform-null-context.git?ref=v0.1.0`. Storage account names allow only lowercase letters and digits and at most 24 characters, so the generated name uses no delimiter and is limited to 24 characters (longer names are shortened with a hash).
+
+## Inputs
+
+### Private account
+
+A private account (no public access, no shared keys, no public blobs) is expressed with `public_network_access_enabled = false`, `shared_access_key_enabled = false` and `allow_nested_items_to_be_public = false`. This module declares no containers and no private endpoint. With shared keys disabled, anything that talks to the data plane (for example a container resource in another configuration) must use Microsoft Entra ID, for instance the azurerm provider setting `storage_use_azuread = true`.
+
+### All inputs
+
+Every azurerm argument is an input and every input is required (no defaults): pass `null` for an argument you do not want to set. Context inputs (`enabled`, `namespace`, `environment`, `stage`, `name`, `attributes`, `tags`, ...) are declared in `_context.tf`. The resource `name` and `tags` come from the context module, so they are not separate inputs. Deprecated azurerm arguments are not exposed. Nested block inputs are typed objects whose attributes follow the azurerm documentation for that block (https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account).
+
+| Name | Type | Description |
+|------|------|-------------|
+| resource_group_name | `string` | The name of the resource group in which to create the storage account. Changing this forces a new resource to be created. |
+| location | `string` | Specifies the supported Azure location where the resource exists. Changing this forces a new resource to be created. |
+| access_tier | `string` | Defines the access tier for BlobStorage, FileStorage and StorageV2 accounts. Valid options are Hot, Cool, Cold, Smart and Premium. Defaults to Hot. |
+| account_kind | `string` | Defines the Kind of account. Valid options are BlobStorage, BlockBlobStorage, FileStorage, Storage and StorageV2. Defaults to StorageV2. |
+| account_replication_type | `string` | Defines the type of replication to use for this storage account. Possible values are LRS, GRS, RAGRS, ZRS, GZRS, and RAGZRS. |
+| account_tier | `string` | Defines the Tier to use for this storage account. Valid options are Standard and Premium. For BlockBlobStorage and FileStorage accounts only Premium is valid. Changing this forces a new resource to be created. |
+| allow_nested_items_to_be_public | `bool` | Allow or disallow nested items within this Account to opt into being public. Defaults to false. |
+| allowed_copy_scope | `string` | The permitted scope for copy operations between storage accounts. Possible values are AAD, PrivateLink and All. |
+| cross_tenant_replication_enabled | `bool` | Should cross Tenant replication be enabled? Defaults to false. |
+| default_to_oauth_authentication | `bool` | Default to Azure Active Directory authorization in the Azure portal when accessing the Storage Account. The default value is false |
+| dns_endpoint_type | `string` | Specifies which DNS endpoint type to use. Possible values are Standard and AzureDnsZone. Defaults to Standard. Changing this forces a new resource to be created. |
+| edge_zone | `string` | Specifies the Edge Zone within the Azure Region where this Storage Account should exist. Changing this forces a new Storage Account to be created. |
+| https_traffic_only_enabled | `bool` | Boolean flag which forces HTTPS if enabled. Defaults to true. |
+| infrastructure_encryption_enabled | `bool` | Is infrastructure encryption enabled? Changing this forces a new resource to be created. Defaults to false. |
+| is_hns_enabled | `bool` | Is Hierarchical Namespace enabled? This can be used with Azure Data Lake Storage Gen 2. Changing this forces a new resource to be created. |
+| large_file_share_enabled | `bool` | Are Large File Shares Enabled? Defaults to false. |
+| local_user_enabled | `bool` | Is Local User Enabled? Defaults to true. |
+| min_tls_version | `string` | The minimum supported TLS version for the storage account. The only possible value is TLS1_2. Defaults to TLS1_2 for new storage accounts. |
+| nfsv3_enabled | `bool` | Is NFSv3 protocol enabled? Changing this forces a new resource to be created. Defaults to false. |
+| provisioned_billing_model_version | `string` | Specifies the version of the provisioned billing model (e.g. when account_kind = 'FileStorage' for Storage File). Possible value is V2. Changing this forces a new resource to be created. |
+| public_network_access_enabled | `bool` | Whether the public network access is enabled. Defaults to true. |
+| queue_encryption_key_type | `string` | The encryption type of the queue service. Possible values are Service and Account. Changing this forces a new resource to be created. Default value is Service. |
+| sftp_enabled | `bool` | Boolean, enable SFTP for the storage account |
+| shared_access_key_enabled | `bool` | Whether the storage account permits requests to be authorized with the account access key via Shared Key. If false, all requests, including shared access signatures, must be authorized with Azure Active Directory. |
+| table_encryption_key_type | `string` | The encryption type of the table service. Possible values are Service and Account. Changing this forces a new resource to be created. Default value is Service. |
+| azure_files_authentication | `object` | An azure_files_authentication block (with a nested `active_directory` block) |
+| blob_properties | `object` | A blob_properties block (nested `container_delete_retention_policy`, `cors_rule`, `delete_retention_policy`, `restore_policy`) |
+| custom_domain | `object` | A custom_domain block |
+| customer_managed_key | `object` | A customer_managed_key block |
+| identity | `object` | An identity block |
+| immutability_policy | `object` | An immutability_policy block. Changing this forces a new resource to be created |
+| network_rules | `object` | A network_rules block (nested `private_link_access`) |
+| queue_properties | `object` | The queue_properties block (nested `cors_rule`, `hour_metrics`, `logging`, `minute_metrics`) |
+| routing | `object` | A routing block |
+| sas_policy | `object` | A sas_policy block |
+| share_properties | `object` | A share_properties block (nested `cors_rule`, `retention_policy`, `smb`) |
+| static_website | `object` | The static_website block |
+| timeouts | `object` | The timeouts block of azurerm_storage_account |
+
+## Outputs
+
+Endpoints, hosts and locations (primary and secondary), plus `id`, `identity` and `customer_managed_key`; all are null when the module is disabled. Access keys, connection strings and the routing-preference endpoint variants are deliberately not output.
+
+## Usage
+
+```hcl
+terraform {
+  source = "git::https://github.com/raringgroup/terraform-azurerm-storage-account.git?ref=develop"
+}
+
+inputs = {
+  enabled     = true
+  namespace   = "<namespace>"
+  environment = "<environment>"
+  stage       = "<stage>"
+  name        = "<name>"
+
+  resource_group_name               = "<value>"
+  location                          = "<value>"
+  account_replication_type          = "<value>"
+  account_tier                      = "<value>"
+  access_tier                       = null
+  account_kind                      = null
+  allow_nested_items_to_be_public   = null
+  allowed_copy_scope                = null
+  cross_tenant_replication_enabled  = null
+  default_to_oauth_authentication   = null
+  dns_endpoint_type                 = null
+  edge_zone                         = null
+  https_traffic_only_enabled        = null
+  infrastructure_encryption_enabled = null
+  is_hns_enabled                    = null
+  large_file_share_enabled          = null
+  local_user_enabled                = null
+  min_tls_version                   = null
+  nfsv3_enabled                     = null
+  provisioned_billing_model_version = null
+  public_network_access_enabled     = null
+  queue_encryption_key_type         = null
+  sftp_enabled                      = null
+  shared_access_key_enabled         = null
+  table_encryption_key_type         = null
+  azure_files_authentication        = null
+  blob_properties                   = null
+  custom_domain                     = null
+  customer_managed_key              = null
+  identity                          = null
+  immutability_policy               = null
+  network_rules                     = null
+  queue_properties                  = null
+  routing                           = null
+  sas_policy                        = null
+  share_properties                  = null
+  static_website                    = null
+  timeouts                          = null
+}
+```
+
+## License
+
+Apache License 2.0. Copyright 2026 Raring Group LLC.
