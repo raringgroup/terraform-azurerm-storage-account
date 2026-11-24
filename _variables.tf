@@ -29,6 +29,12 @@ variable "location" {
   description = "Specifies the supported Azure location where the resource exists. Changing this forces a new resource to be created."
 }
 
+variable "name_override" {
+  type        = string
+  default     = null
+  description = "A fixed name for the storage account. When set it is used instead of the name generated from the context; when null the generated name applies. It must be 3 to 24 lowercase letters and digits, and changing it replaces the account."
+}
+
 variable "access_tier" {
   type        = string
   description = "Defines the access tier for BlobStorage, FileStorage and StorageV2 accounts. Valid options are Hot, Cool, Cold, Smart and Premium. Defaults to Hot."
