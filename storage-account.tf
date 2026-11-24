@@ -14,7 +14,7 @@
 ## limitations under the License.
 ## ----------------------------------------------------------------------------
 ##
-##  modules/storage-account/storage-account.tf
+##  storage-account.tf
 ##
 ##  Creates an Azure storage account, named and tagged through the Raring Group context module, exposing every azurerm_storage_account argument.
 ## ----------------------------------------------------------------------------

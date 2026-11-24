@@ -14,7 +14,7 @@
 ## limitations under the License.
 ## ----------------------------------------------------------------------------
 ##
-##  modules/storage-account/_variables.tf
+##  _variables.tf
 ##
 ##  Input variables for the storage-account module.
 ## ----------------------------------------------------------------------------

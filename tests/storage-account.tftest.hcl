@@ -1,9 +1,9 @@
 mock_provider "azurerm" {}
 
 variables {
-  namespace   = "upsis"
+  namespace   = "example"
   environment = "dev"
-  name        = "ehssync"
+  name        = "app"
 
   account_replication_type        = "LRS"
   account_tier                    = "Standard"
@@ -51,11 +51,11 @@ run "the_module_adds_no_attributes_of_its_own" {
   command = plan
 
   assert {
-    condition     = azurerm_storage_account.this[0].name == "upsisdevehssync"
+    condition     = azurerm_storage_account.this[0].name == "exampledevapp"
     error_message = "with no attributes passed, the generated name must be the context labels only (no st suffix)"
   }
   assert {
-    condition     = output.name == "upsisdevehssync"
+    condition     = output.name == "exampledevapp"
     error_message = "the name output must match the resource name"
   }
 }
@@ -69,7 +69,7 @@ run "callers_control_the_whole_name_with_attributes" {
   }
 
   assert {
-    condition     = azurerm_storage_account.this[0].name == "devupsisehssyncdata"
+    condition     = azurerm_storage_account.this[0].name == "devexampleappdata"
     error_message = "the name must follow label_order and the attributes the caller passes"
   }
 }
@@ -83,7 +83,7 @@ run "another_attribute_gives_another_name" {
   }
 
   assert {
-    condition     = azurerm_storage_account.this[0].name == "devupsisehssyncext"
+    condition     = azurerm_storage_account.this[0].name == "devexampleappext"
     error_message = "a different attribute must give a different name"
   }
 }
@@ -97,7 +97,7 @@ run "passing_st_as_the_last_attribute_restores_the_old_name" {
   }
 
   assert {
-    condition     = azurerm_storage_account.this[0].name == "extstupsisdevehssync"
+    condition     = azurerm_storage_account.this[0].name == "extstexampledevapp"
     error_message = "attributes ext + st must reproduce the name the previous version generated"
   }
 }
@@ -106,16 +106,16 @@ run "name_override_is_used_as_given" {
   command = plan
 
   variables {
-    name_override = "devupsisehssyncdata"
+    name_override = "devexampleappdata"
     attributes    = ["ignored"]
   }
 
   assert {
-    condition     = azurerm_storage_account.this[0].name == "devupsisehssyncdata"
+    condition     = azurerm_storage_account.this[0].name == "devexampleappdata"
     error_message = "name_override must be the exact account name"
   }
   assert {
-    condition     = output.name == "devupsisehssyncdata"
+    condition     = output.name == "devexampleappdata"
     error_message = "the name output must show the override"
   }
 }
@@ -124,11 +124,11 @@ run "tags_come_from_the_context_even_with_an_override" {
   command = plan
 
   variables {
-    name_override = "devupsisehssyncdata"
+    name_override = "devexampleappdata"
   }
 
   assert {
-    condition     = azurerm_storage_account.this[0].tags["Namespace"] == "upsis" && azurerm_storage_account.this[0].tags["Environment"] == "dev" && azurerm_storage_account.this[0].tags["Name"] == "upsisdevehssync"
+    condition     = azurerm_storage_account.this[0].tags["Namespace"] == "example" && azurerm_storage_account.this[0].tags["Environment"] == "dev" && azurerm_storage_account.this[0].tags["Name"] == "exampledevapp"
     error_message = "tags must come from the context; the Name tag keeps the generated name"
   }
 }
@@ -141,7 +141,7 @@ run "an_empty_override_falls_back_to_the_generated_name" {
   }
 
   assert {
-    condition     = azurerm_storage_account.this[0].name == "upsisdevehssync"
+    condition     = azurerm_storage_account.this[0].name == "exampledevapp"
     error_message = "an empty name_override must fall back to the generated name"
   }
 }
@@ -192,7 +192,7 @@ run "a_disabled_module_creates_nothing" {
 
   variables {
     enabled       = false
-    name_override = "devupsisehssyncdata"
+    name_override = "devexampleappdata"
   }
 
   assert {
