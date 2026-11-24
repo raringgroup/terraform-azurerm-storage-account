@@ -14,7 +14,7 @@
 ## limitations under the License.
 ## ----------------------------------------------------------------------------
 ##
-##  modules/storage-account/_versions.tf
+##  _versions.tf
 ##
 ##  Terraform and AzureRM provider version constraints.
 ## ----------------------------------------------------------------------------

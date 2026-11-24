@@ -5,7 +5,7 @@
 ### Breaking change
 
 - The module no longer adds the attribute `st` to the generated storage account name. The inner `storage_account_context` call now sets only `delimiter = ""`, `label_value_case = "lower"` and `regex_replace_chars = "/[^a-zA-Z0-9]/"`, which Azure requires because storage account names allow only lowercase letters and digits. Callers pass their own attributes through the context.
-- **Effect:** generated names no longer end in `st`. For the same inputs, `extstupsisdevehssync` becomes `extupsisdevehssync`. Callers that rely on the generated name will see their storage account renamed. Changing the name of a storage account forces a new resource, so Terraform replaces the account (destroy and create) and its data is not migrated.
+- **Effect:** generated names no longer end in `st`. For the same inputs, `extstexampledevapp` becomes `extexampledevapp`. Callers that rely on the generated name will see their storage account renamed. Changing the name of a storage account forces a new resource, so Terraform replaces the account (destroy and create) and its data is not migrated.
 - **To keep an existing account**, either pass `st` as the last attribute (for example `attributes = ["ext", "st"]`, which reproduces the v0.1.0 name for the same `label_order`) or set `name_override` to the existing account name. Check the plan before applying.
 
 ### Added

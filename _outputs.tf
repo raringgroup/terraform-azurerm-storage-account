@@ -14,7 +14,7 @@
 ## limitations under the License.
 ## ----------------------------------------------------------------------------
 ##
-##  modules/storage-account/_outputs.tf
+##  _outputs.tf
 ##
 ##  Output values for the storage-account module. Access keys and connection
 ##  strings are never output.
