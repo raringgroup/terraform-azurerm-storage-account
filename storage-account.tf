@@ -16,7 +16,7 @@
 ##
 ##  modules/storage-account/storage-account.tf
 ##
-##  Creates an Azure storage account, named and tagged through the SevenPico context module, exposing every azurerm_storage_account argument.
+##  Creates an Azure storage account, named and tagged through the Raring Group context module, exposing every azurerm_storage_account argument.
 ## ----------------------------------------------------------------------------
 
 ## Storage Account Context
@@ -24,9 +24,9 @@ module "storage_account_context" {
   source  = "git::https://github.com/raringgroup/terraform-null-context.git?ref=v0.1.0"
   context = module.context.self
 
-  attributes      = ["st"]
-  delimiter       = ""
-  id_length_limit = 24
+  delimiter           = ""
+  label_value_case    = "lower"
+  regex_replace_chars = "/[^a-zA-Z0-9]/"
 }
 
 
@@ -51,7 +51,7 @@ resource "azurerm_storage_account" "this" {
   local_user_enabled                = var.local_user_enabled
   location                          = var.location
   min_tls_version                   = var.min_tls_version
-  name                              = module.storage_account_context.id
+  name                              = coalesce(var.name_override, module.storage_account_context.id)
   nfsv3_enabled                     = var.nfsv3_enabled
   provisioned_billing_model_version = var.provisioned_billing_model_version
   public_network_access_enabled     = var.public_network_access_enabled
@@ -292,6 +292,13 @@ resource "azurerm_storage_account" "this" {
       delete = timeouts.value.delete
       read   = timeouts.value.read
       update = timeouts.value.update
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = can(regex("^[a-z0-9]{3,24}$", coalesce(var.name_override, module.storage_account_context.id)))
+      error_message = "The storage account name must be 3 to 24 lowercase letters and digits. For a generated name, use more letters or digits in namespace, environment, stage or name if it is shorter than 3 characters, or shorter values if it is longer than 24. A name_override must meet the same rule."
     }
   }
 }

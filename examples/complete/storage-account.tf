@@ -18,6 +18,7 @@
 ##
 ##  Creates a resource group and a private storage account: no public network access,
 ##  no shared keys and no public blobs. Every input is listed; null leaves an argument unset.
+##  The account name is built from the context plus the attributes this example passes.
 ## ----------------------------------------------------------------------------
 
 ## Resource Group
@@ -32,6 +33,12 @@ resource "azurerm_resource_group" "this" {
 module "storage_account" {
   source  = "../../"
   context = module.context.self
+
+  # The module adds no attributes of its own, so the caller passes them. A storage account
+  # name is at most 24 lowercase letters and digits, so this example leaves the project out
+  # of the name: namespace + stage + attribute = rgcompletedata.
+  attributes  = ["data"]
+  label_order = ["namespace", "environment", "stage", "name", "attributes"]
 
   access_tier                       = null
   account_kind                      = null

@@ -1,6 +1,6 @@
 # storage-account
 
-Creates an Azure storage account, named and tagged through the SevenPico context module, exposing every azurerm_storage_account argument. Storage containers, queues, tables and file shares are not managed here.
+Creates an Azure storage account, named and tagged through the Raring Group context module, exposing every azurerm_storage_account argument. Storage containers, queues, tables and file shares are not managed here.
 
 ## Requirements
 
@@ -9,9 +9,13 @@ Creates an Azure storage account, named and tagged through the SevenPico context
 | terraform | `>= 1.3.0` |
 | azurerm | `>= 4.0.0, < 5.0.0` |
 
-## Module Priority
+## Naming
 
-No SevenPico, SevenPicoForks or CloudPosse module exists for this Azure service, so the module uses `azurerm_storage_account` directly. The root context is declared in `_context.tf`; it and the child contexts use `git::https://github.com/raringgroup/terraform-null-context.git?ref=v0.1.0`. Storage account names allow only lowercase letters and digits and at most 24 characters, so the generated name uses no delimiter and is limited to 24 characters (longer names are shortened with a hash).
+Storage account names allow only lowercase letters and digits and at most 24 characters, so the generated name uses no delimiter. The name must also be globally unique.
+
+The module adds no labels or attributes of its own: the generated name is built only from the context inputs the caller passes (`namespace`, `environment`, `stage`, `name`, `attributes`, ...), joined in the order of `label_order`. Callers therefore control the whole name, including its suffix. The module removes every character that is not a letter or digit from those inputs (hyphens, underscores, periods and spaces) and lowercases the result, so a namespace such as `My-Org` becomes `myorg`. The plan fails if the final name is shorter than 3 or longer than 24 characters.
+
+For example, with `namespace = "upsis"`, `environment = "dev"`, `name = "ehssync"`, `label_order = ["environment", "namespace", "name", "attributes"]` and `attributes = ["data"]` the account is named `devupsisehssyncdata`, and `attributes = ["ext"]` gives `devupsisehssyncext`. To set an exact name instead, use `name_override` (see below). The tags always come from the context, so the `Name` tag keeps the generated name even when `name_override` is set.
 
 ## Inputs
 
@@ -19,14 +23,19 @@ No SevenPico, SevenPicoForks or CloudPosse module exists for this Azure service,
 
 A private account (no public access, no shared keys, no public blobs) is expressed with `public_network_access_enabled = false`, `shared_access_key_enabled = false` and `allow_nested_items_to_be_public = false`. This module declares no containers and no private endpoint. With shared keys disabled, anything that talks to the data plane (for example a container resource in another configuration) must use Microsoft Entra ID, for instance the azurerm provider setting `storage_use_azuread = true`.
 
+### Fixed name (`name_override`)
+
+`name_override` sets the exact storage account name. It is the only input with a default, and the default is `null`: when it is `null` (or an empty string) the name is generated from the context as described under Naming. When it is set, the value is used as given and the context labels and attributes no longer affect the name. It must be 3 to 24 lowercase letters and digits (no hyphens, uppercase letters or other characters) and it must be globally unique; a value that breaks the rule fails the plan. Changing it, or switching between an override and a generated name, changes the account name, which forces a new storage account: Terraform replaces the account and its data is not migrated. The resulting name is available as the `name` output.
+
 ### All inputs
 
-Every azurerm argument is an input and every input is required (no defaults): pass `null` for an argument you do not want to set. Context inputs (`enabled`, `namespace`, `environment`, `stage`, `name`, `attributes`, `tags`, ...) are declared in `_context.tf`. The resource `name` and `tags` come from the context module, so they are not separate inputs. Deprecated azurerm arguments are not exposed. Nested block inputs are typed objects whose attributes follow the azurerm documentation for that block (https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account).
+Every azurerm argument is an input and every input is required (no defaults, except `name_override`, which defaults to `null`): pass `null` for an argument you do not want to set. Context inputs (`enabled`, `namespace`, `environment`, `stage`, `name`, `attributes`, `tags`, ...) are declared in `_context.tf`. The resource `tags` come from the context module, and so does the resource `name` unless `name_override` is set. Deprecated azurerm arguments are not exposed. Nested block inputs are typed objects whose attributes follow the azurerm documentation for that block (https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account).
 
 | Name | Type | Description |
 |------|------|-------------|
 | resource_group_name | `string` | The name of the resource group in which to create the storage account. Changing this forces a new resource to be created. |
 | location | `string` | Specifies the supported Azure location where the resource exists. Changing this forces a new resource to be created. |
+| name_override | `string` | A fixed name for the storage account. When set it is used instead of the generated name; when `null` the name is generated from the context. It must be 3 to 24 lowercase letters and digits. Changing it replaces the account. |
 | access_tier | `string` | Defines the access tier for BlobStorage, FileStorage and StorageV2 accounts. Valid options are Hot, Cool, Cold, Smart and Premium. Defaults to Hot. |
 | account_kind | `string` | Defines the Kind of account. Valid options are BlobStorage, BlockBlobStorage, FileStorage, Storage and StorageV2. Defaults to StorageV2. |
 | account_replication_type | `string` | Defines the type of replication to use for this storage account. Possible values are LRS, GRS, RAGRS, ZRS, GZRS, and RAGZRS. |
@@ -66,13 +75,21 @@ Every azurerm argument is an input and every input is required (no defaults): pa
 
 ## Outputs
 
-Endpoints, hosts and locations (primary and secondary), plus `id`, `identity` and `customer_managed_key`; all are null when the module is disabled. Access keys, connection strings and the routing-preference endpoint variants are deliberately not output.
+Endpoints, hosts and locations (primary and secondary), plus `id`, `identity`, `name` (the final account name) and `customer_managed_key`; all are null when the module is disabled. Access keys, connection strings and the routing-preference endpoint variants are deliberately not output.
+
+## Upgrading from v0.1.0 (breaking change)
+
+Version v0.1.0 added the attribute `st` to every generated name (for example `extstupsisdevehssync`). From v0.2.0 the module adds no attributes, so generated names no longer end in `st`.
+
+**Effect.** A caller that relies on the generated name will see the account renamed. Changing the name of a storage account forces a new resource, so Terraform replaces the account (destroy and create) and its data is not migrated. Read the plan before applying: the account shows as replaced, with `name` marked as the reason.
+
+**Keeping an existing account.** Either pass `st` as the last attribute, for example `attributes = ["ext", "st"]` (v0.1.0 appended `st` after the caller's attributes, so this reproduces the previous name for the same `label_order`), or set `name_override` to the existing account name.
 
 ## Usage
 
 ```hcl
 terraform {
-  source = "git::https://github.com/raringgroup/terraform-azurerm-storage-account.git?ref=develop"
+  source = "git::https://github.com/raringgroup/terraform-azurerm-storage-account.git?ref=v0.2.0"
 }
 
 inputs = {
@@ -81,9 +98,11 @@ inputs = {
   environment = "<environment>"
   stage       = "<stage>"
   name        = "<name>"
+  attributes  = ["<attribute>"]
 
   resource_group_name               = "<value>"
   location                          = "<value>"
+  name_override                     = null
   account_replication_type          = "<value>"
   account_tier                      = "<value>"
   access_tier                       = null
@@ -122,6 +141,15 @@ inputs = {
   timeouts                          = null
 }
 ```
+
+## Examples
+
+| Example | Scenario |
+|---------|----------|
+| [`complete`](examples/complete) | A private account with every input listed. The example passes its own attributes, because the module adds none. |
+| [`name-override`](examples/name-override) | Sets the exact account name with `name_override` and asserts the resulting name in its outputs. |
+
+Run the module tests with `terraform test`; they use a mock provider and need no Azure credentials.
 
 ## License
 

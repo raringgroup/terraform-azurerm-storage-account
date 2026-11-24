@@ -35,6 +35,11 @@ output "identity" {
   value       = try(azurerm_storage_account.this[0].identity, null)
 }
 
+output "name" {
+  description = "Name of the storage account: name_override when set, otherwise the name generated from the context (null when disabled)"
+  value       = try(azurerm_storage_account.this[0].name, null)
+}
+
 output "primary_blob_endpoint" {
   description = "Primary blob endpoint of the storage account (null when disabled)"
   value       = try(azurerm_storage_account.this[0].primary_blob_endpoint, null)
