@@ -155,4 +155,4 @@ Run the module tests with `terraform test`; they use a mock provider and need no
 
 Apache-2.0. See LICENSE and NOTICE.
 
-`_context.tf` is derived from Cloud Posse's [terraform-null-label](https://github.com/cloudposse/terraform-null-label).
+`_context.tf` is derived from Cloud Posse's [terraform-null-label](https://github.com/cloudposse/terraform-null-label), Copyright 2017-2020 Cloud Posse, LLC.
