@@ -153,4 +153,6 @@ Run the module tests with `terraform test`; they use a mock provider and need no
 
 ## License
 
-Apache License 2.0. Copyright 2026 Raring Group LLC.
+Apache-2.0. See LICENSE and NOTICE.
+
+`_context.tf` is derived from Cloud Posse's [terraform-null-label](https://github.com/cloudposse/terraform-null-label).
